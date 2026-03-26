@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Focus Foods Hub - Role Based Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: #F0F4EF;
+      max-width: 500px;
+      margin: 0 auto;
+      min-height: 100vh;
+      position: relative;
+    }
+    /* global */
+    .page { display: none; min-height: 100vh; flex-direction: column; background: #F0F4EF; }
+    .page.active { display: flex; }
+    .scroll { flex: 1; overflow-y: auto; padding: 16px 16px 80px; }
+    .topbar {
+      background: white;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #E2E8E2;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .back-btn, .icon-btn {
+      background: #F0F4EF;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .page-title { font-size: 20px; font-weight: 800; flex: 1; }
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .btn-primary {
+      background: #1E6F4C;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 40px;
+      font-weight: 700;
+      width: 100%;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #1E6F4C;
+      color: #1E6F4C;
+      padding: 10px;
+      border-radius: 40px;
+      font-weight: 600;
+    }
+    .badge {
+      display: inline-block;
+      background: #EFF7EF;
+      padding: 4px 10px;
+      border-radius: 40px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 16px 14px;
+      border-top: 1px solid #E2E8E2;
+      z-index: 100;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8BA393;
+      cursor: pointer;
+    }
+    .nav-item.active { color: #1E6F4C; }
+    .form-group { margin-bottom: 16px; }
+    label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 13px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1.5px solid #D0DEC8;
+      background: white;
+    }
+    .role-selector { display: flex; gap: 12px; margin-bottom: 20px; }
+    .role-option {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      border-radius: 20px;
+      border: 1.5px solid #D0DEC8;
+      cursor: pointer;
+      background: white;
+    }
+    .role-option.selected { background: #1E6F4C; color: white; border-color: #1E6F4C; }
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1A2E25;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-size: 13px;
+      z-index: 300;
+      opacity: 0;
+      transition: 0.2s;
+      pointer-events: none;
+    }
+    .cart-float {
+      position: fixed;
+      bottom: 80px;
+      left: 16px;
+      right: 16px;
+      background: #1E6F4C;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-radius: 60px;
+      cursor: pointer;
+      z-index: 99;
+      font-weight: 700;
+    }
+    .hidden { display: none; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: flex-end;
+      z-index: 200;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 28px 28px 0 0;
+      width: 100%;
+      padding: 24px 20px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    hr { margin: 12px 0; }
+    .menu-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ========== AUTH PAGE ========== -->
+<div id="authPage" class="page active">
+  <div style="background: #1E6F4C; padding: 48px 24px 32px; text-align: center;">
+    <div style="font-size: 56px;">🥗</div>
+    <h1 style="color: white;">Focus Foods Hub</h1>
+    <p style="color: #C8E6D9;">Healthy eating, simplified & verified</p>
+  </div>
+  <div style="background: white; border-radius: 32px 32px 0 0; padding: 24px 20px; flex:1;">
+    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+      <button id="authLoginTab" class="btn-primary" style="background: #1E6F4C;">Sign In</button>
+      <button id="authSignupTab" class="btn-outline">Create Account</button>
+    </div>
+    <div id="loginForm">
+      <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="loginPassword"></div>
+      <button class="btn-primary" id="doLoginBtn">Sign In →</button>
+    </div>
+    <div id="signupForm" style="display: none;">
+      <div class="form-group"><label>Full Name</label><input type="text" id="signupName"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="signupEmail"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="signupPassword"></div>
+      <div class="form-group"><label>Select Role</label>
+        <div class="role-selector">
+          <div class="role-option" data-role="consumer">🍽️ Consumer</div>
+          <div class="role-option" data-role="business">🏪 Restaurant Partner</div>
+          <div class="role-option" data-role="admin">📊 Management</div>
+        </div>
+      </div>
+      <div class="form-group" id="businessFields" style="display: none;">
+        <label>Restaurant Name</label>
+        <input type="text" id="restaurantName" placeholder="Your restaurant name">
+      </div>
+      <button class="btn-primary" id="doSignupBtn">Join →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CONSUMER DASHBOARD ========== -->
+<div id="consumerPage" class="page">
+  <div style="background: #1E6F4C; padding: 20px 18px;">
+    <h2 id="consumerGreeting" style="color: white;">Hello, User</h2>
+    <p style="color: #C8E6D9;">Find healthy meals</p>
+    <div style="background: white; border-radius: 30px; padding: 12px 16px; margin-top: 12px;" onclick="searchTrigger()">🔍 Search restaurants...</div>
+  </div>
+  <div class="scroll" id="consumerScroll">
+    <div id="consumerRestaurants"></div>
+  </div>
+  <div id="consumerCartFloat" class="cart-float hidden" onclick="openConsumerCart()">🛒 <span id="cartCount">0</span> items · PKR <span id="cartTotal">0</span></div>
+  <div class="bottom-nav">
+    <button class="nav-item active" data-dash="consumer">🏠 Home</button>
+    <button class="nav-item" data-dash="consumerOrders">📦 Orders</button>
+    <button class="nav-item" data-dash="consumerProfile">👤 Profile</button>
+  </div>
+</div>
+
+<!-- Consumer Orders -->
+<div id="consumerOrdersPage" class="page">
+  <div class="topbar"><button class="back-btn" onclick="switchConsumerSubpage('consumerPage')">←</button><div class="page-title">My Orders</div></div>
+  <div class="scroll" id="consumerOrdersList"></div>
+  <div class="bottom-nav">
+    <button class="nav-item" data-dash="consumer">🏠 Home</button>
+    <button class="nav-item active" data-dash="consumerOrders">📦 Orders</button>
+    <button class="nav-item" data-dash="consumerProfile">👤 Profile</button>
+  </div>
+</div>
+
+<div id="consumerProfilePage" class="page">
+  <div class="topbar"><button class="back-btn" onclick="switchConsumerSubpage('consumerPage')">←</button><div class="page-title">My Profile</div></div>
+  <div class="scroll" id="consumerProfileContent"></div>
+  <div class="bottom-nav">
+    <button class="nav-item" data-dash="consumer">🏠 Home</button>
+    <button class="nav-item" data-dash="consumerOrders">📦 Orders</button>
+    <button class="nav-item active" data-dash="consumerProfile">👤 Profile</button>
+  </div>
+</div>
+
+<!-- ========== BUSINESS DASHBOARD ========== -->
+<div id="businessPage" class="page">
+  <div class="topbar"><div class="page-title">Restaurant Dashboard</div><button class="icon-btn" id="businessLogoutBtn">🚪</button></div>
+  <div class="scroll">
+    <div id="businessInfo" style="background: white; border-radius: 24px; padding: 16px; margin-bottom: 20px;"></div>
+    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+      <button class="btn-primary" id="showMenuBtn">📋 Manage Menu</button>
+      <button class="btn-outline" id="showOrdersBtn">📦 View Orders</button>
+      <button class="btn-outline" id="showStatsBtn">📊 Analytics</button>
+    </div>
+    <div id="businessPanel"></div>
+  </div>
+</div>
+
+<!-- ========== ADMIN DASHBOARD ========== -->
+<div id="adminPage" class="page">
+  <div class="topbar"><div class="page-title">Management Console</div><button class="icon-btn" id="adminLogoutBtn">🚪</button></div>
+  <div class="scroll">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+      <div class="card" id="statUsers">👥 Users: 0</div>
+      <div class="card" id="statRestaurants">🏪 Restaurants: 0</div>
+      <div class="card" id="statOrders">📦 Orders: 0</div>
+      <div class="card" id="statRevenue">💰 Revenue: PKR 0</div>
+    </div>
+    <div class="card" onclick="showVerifyRestaurants()">✅ Verify Restaurants</div>
+    <div class="card" onclick="showAllOrders()">📋 All Orders</div>
+    <div class="card" onclick="manageCommunityPosts()">🌿 Community Moderation</div>
+    <div id="adminDetailPanel"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="menuModal" class="modal"><div class="modal-content"><h3>Manage Menu</h3><div id="menuItemsList"></div><button class="btn-primary" id="addMenuItemBtn">+ Add Item</button><button class="btn-outline" style="margin-top:8px;" onclick="closeModal('menuModal')">Close</button></div></div>
+<div id="ordersModal" class="modal"><div class="modal-content"><h3>Incoming Orders</h3><div id="businessOrdersList"></div><button class="btn-outline" onclick="closeModal('ordersModal')">Close</button></div></div>
+<div id="statsModal" class="modal"><div class="modal-content"><h3>Analytics</h3><div id="statsContent"></div><button class="btn-outline" onclick="closeModal('statsModal')">Close</button></div></div>
+<div id="consumerCartModal" class="modal"><div class="modal-content"><h3>Your Cart</h3><div id="consumerCartItems"></div><button class="btn-primary" id="checkoutConfirmBtn">Place Order</button><button class="btn-outline" onclick="closeModal('consumerCartModal')">Back</button></div></div>
+<div id="restaurantDetailModal" class="modal"><div class="modal-content"><h3 id="modalRestName"></h3><div id="modalMenuList"></div><button class="btn-outline" onclick="closeModal('restaurantDetailModal')">Close</button></div></div>
+
+<script>
+  // ------------------------ DATA MODELS ------------------------
+  let currentUser = null; // { id, name, email, password, role, restaurantId (if business) }
+  let restaurants = [];    // each: { id, name, ownerId, verified, healthScore, rating, distance, categories, menu:[] }
+  let orders = [];         // { id, userId, restaurantId, items, total, status, date }
+  let users = [];
+
+  // Helper
+  function showToast(msg) { let t = document.getElementById('toast'); t.innerText = msg; t.style.opacity = '1'; setTimeout(()=> t.style.opacity='0', 2000); }
+  function saveData() { localStorage.setItem('focus_users', JSON.stringify(users)); localStorage.setItem('focus_restaurants', JSON.stringify(restaurants)); localStorage.setItem('focus_orders', JSON.stringify(orders)); }
+  function loadData() {
+    users = JSON.parse(localStorage.getItem('focus_users') || '[]');
+    restaurants = JSON.parse(localStorage.getItem('focus_restaurants') || '[]');
+    orders = JSON.parse(localStorage.getItem('focus_orders') || '[]');
+    if(restaurants.length === 0) {
+      // seed some demo restaurants (ownerId null means system)
+      restaurants.push({ id: 1, name: "Green Bowl Co.", ownerId: null, verified: true, healthScore: 92, rating: 4.8, distance: 1.2, categories: "Salads, Bowls", menu: [{ name: "Protein Power Bowl", price: 850, cal: 380, protein: 42, emoji:"🥗" }, { name: "Keto Salmon Bowl", price: 1100, cal: 320, protein: 36, emoji:"🐟" }] });
+      restaurants.push({ id: 2, name: "Fit Kitchen Lahore", ownerId: null, verified: true, healthScore: 88, rating: 4.6, distance: 2.1, categories: "Meal Prep", menu: [{ name: "Grilled Chicken Box", price: 990, cal: 520, protein: 48, emoji:"🍗" }] });
+      saveData();
+    }
+  }
+
+  // Auth
+  function initAuth() {
+    let stored = localStorage.getItem('focus_current');
+    if(stored) { currentUser = JSON.parse(stored); redirectByRole(); }
+    else { showPage('authPage'); }
+  }
+  function redirectByRole() {
+    if(currentUser.role === 'consumer') showConsumerDashboard();
+    else if(currentUser.role === 'business') showBusinessDashboard();
+    else if(currentUser.role === 'admin') showAdminDashboard();
+  }
+  function showPage(pageId) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(pageId).classList.add('active'); }
+  function logout() { localStorage.removeItem('focus_current'); currentUser = null; showPage('authPage'); }
+
+  // ----- Consumer -----
+  let consumerCart = {}; // { restaurantId, items: [{ name, price, qty, restId }] }
+  function loadConsumerCart() { if(currentUser) { let c = localStorage.getItem(`cart_${currentUser.id}`); consumerCart = c ? JSON.parse(c) : {}; } updateCartUI(); }
+  function saveConsumerCart() { localStorage.setItem(`cart_${currentUser.id}`, JSON.stringify(consumerCart)); updateCartUI(); }
+  function updateCartUI() { let total=0, count=0; Object.values(consumerCart).forEach(rest=>{ rest.items.forEach(it=>{ total+=it.price*it.qty; count+=it.qty; }); }); document.getElementById('cartCount').innerText=count; document.getElementById('cartTotal').innerText=total; let floatDiv=document.getElementById('consumerCartFloat'); if(count>0) floatDiv.classList.remove('hidden'); else floatDiv.classList.add('hidden'); }
+  function addToConsumerCart(restId, item) { if(!consumerCart[restId]) consumerCart[restId]={ restaurantId:restId, items:[] }; let existing = consumerCart[restId].items.find(i=>i.name===item.name); if(existing) existing.qty+=1; else consumerCart[restId].items.push({ name:item.name, price:item.price, qty:1, emoji:item.emoji, cal:item.cal }); saveConsumerCart(); showToast(`Added ${item.name}`); }
+  function removeConsumerCartItem(restId, itemName) { if(consumerCart[restId]) { let idx = consumerCart[restId].items.findIndex(i=>i.name===itemName); if(idx!==-1) { consumerCart[restId].items[idx].qty--; if(consumerCart[restId].items[idx].qty<=0) consumerCart[restId].items.splice(idx,1); } if(consumerCart[restId].items.length===0) delete consumerCart[restId]; } saveConsumerCart(); }
+  function openConsumerCart() { let modal=document.getElementById('consumerCartModal'); let container=document.getElementById('consumerCartItems'); container.innerHTML=''; let total=0; Object.entries(consumerCart).forEach(([rid,restCart])=>{ let rest = restaurants.find(r=>r.id==rid); restCart.items.forEach(item=>{ total+=item.price*item.qty; container.innerHTML+=`<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><div><strong>${item.name}</strong><br>${rest.name} x${item.qty}<br>PKR ${item.price*item.qty}</div><button style="background:#FFE3E3; border:none; padding:4px 12px; border-radius:20px;" onclick="removeConsumerCartItem(${rid},'${item.name}'); openConsumerCart();">Remove</button></div>`; }); }); document.getElementById('checkoutConfirmBtn').onclick = () => placeConsumerOrder(); modal.style.display='flex'; }
+  function placeConsumerOrder() { if(Object.keys(consumerCart).length===0) return; let total=0; let orderItems=[]; Object.entries(consumerCart).forEach(([rid, cartData])=>{ cartData.items.forEach(it=>{ total+=it.price*it.qty; orderItems.push({ name:it.name, price:it.price, quantity:it.qty, restaurantId:parseInt(rid) }); }); }); let newOrder = { id: Date.now(), userId: currentUser.id, restaurantId: orderItems[0].restaurantId, items: orderItems, total: total, status: "Pending", date: new Date().toISOString() }; orders.push(newOrder); saveData(); consumerCart={}; saveConsumerCart(); closeModal('consumerCartModal'); showToast('Order placed!'); renderConsumerOrders(); }
+  function renderConsumerRestaurants() { let container = document.getElementById('consumerRestaurants'); container.innerHTML = restaurants.filter(r=>r.verified).map(r=>`<div class="card" onclick="openRestaurantModal(${r.id})"><div style="display:flex; gap:12px;"><div style="font-size:44px;">${r.menu[0]?.emoji||'🍽️'}</div><div><h3>${r.name}</h3><div class="badge">⭐ ${r.rating}</div><div class="badge">🌿 ${r.healthScore}</div><div class="badge">${r.distance}km</div><p>${r.categories}</p></div></div></div>`).join(''); }
+  function openRestaurantModal(restId) { let rest = restaurants.find(r=>r.id===restId); document.getElementById('modalRestName').innerText = rest.name; let container = document.getElementById('modalMenuList'); container.innerHTML = rest.menu.map(item=>`<div class="menu-item-row"><div><strong>${item.name} ${item.emoji||''}</strong><br>${item.cal} kcal · Protein ${item.protein}g<br>PKR ${item.price}</div><button class="btn-primary" style="width:auto; padding:6px 16px;" onclick="addToConsumerCart(${rest.id}, {name:'${item.name}', price:${item.price}, emoji:'${item.emoji||''}', cal:${item.cal}}); closeModal('restaurantDetailModal');">Add</button></div>`).join(''); document.getElementById('restaurantDetailModal').style.display='flex'; }
+  function renderConsumerOrders() { let container = document.getElementById('consumerOrdersList'); let myOrders = orders.filter(o=>o.userId===currentUser.id).sort((a,b)=>new Date(b.date)-new Date(a.date)); container.innerHTML = myOrders.map(o=>`<div class="card"><div>🕒 ${new Date(o.date).toLocaleString()}</div><div><strong>${o.items.map(i=>`${i.name} x${i.quantity}`).join(', ')}</strong></div><div>Total PKR ${o.total}</div><span class="badge">${o.status}</span></div>`).join(''); }
+  function renderConsumerProfile() { let container = document.getElementById('consumerProfileContent'); container.innerHTML = `<div class="card"><h3>${currentUser.name}</h3><p>Email: ${currentUser.email}</p><p>Role: Consumer</p><button class="btn-outline" onclick="logout()">Logout</button></div>`; }
+  function showConsumerDashboard() { showPage('consumerPage'); renderConsumerRestaurants(); loadConsumerCart(); }
+  function switchConsumerSubpage(pageId) { showPage(pageId); if(pageId==='consumerOrders') renderConsumerOrders(); if(pageId==='consumerProfile') renderConsumerProfile(); }
+
+  // ----- Business Dashboard -----
+  function getBusinessRestaurant() { return restaurants.find(r=>r.ownerId === currentUser.id); }
+  function showBusinessDashboard() { showPage('businessPage'); let rest = getBusinessRestaurant(); if(!rest) { document.getElementById('businessInfo').innerHTML = '<p>No restaurant assigned. Contact admin.</p>'; return; } document.getElementById('businessInfo').innerHTML = `<h3>${rest.name}</h3><div>Verifi
